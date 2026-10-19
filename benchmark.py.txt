@@ -1,0 +1,35 @@
+import requests
+import time
+
+BASE_URL = "http://127.0.0.1:8000"
+
+def run_benchmark():
+    print("=== INICIANDO BENCHMARK DE RENDIMIENTO ===")
+    
+    # Pruebas para Lambda (Enviando 100 elementos en lotes de 10)
+    print("\n1. Evaluando Arquitectura Lambda (Batch Ingestion)...")
+    start_time = time.time()
+    for _ in range(10):
+        batch = [{"sensor_id": i, "temperatura": 25.5} for i in range(10)]
+        requests.post(f"{BASE_URL}/api/v1/lambda/batch", json=batch)
+    lambda_total_time = time.time() - start_time
+    print(f"-> Lambda procesó 100 registros en: {round(lambda_total_time, 4)} segundos.")
+
+    # Pruebas para Kappa (Enviando 100 elementos uno por uno)
+    print("\n2. Evaluando Arquitectura Kappa (Streaming Ingestion)...")
+    start_time = time.time()
+    for i in range(100):
+        event = {"sensor_id": i, "temperatura": 25.5}
+        requests.post(f"{BASE_URL}/api/v1/kappa/stream", json=event)
+    kappa_total_time = time.time() - start_time
+    print(f"-> Kappa procesó 100 registros en: {round(kappa_total_time, 4)} segundos.")
+
+    print("\n=== RESUMEN DE RESULTADOS ===")
+    print(f"Rendimiento Lambda: {round(100 / lambda_total_time, 2)} registros/segundo")
+    print(f"Rendimiento Kappa:  {round(100 / kappa_total_time, 2)} registros/segundo")
+
+if __name__ == "__main__":
+    try:
+        run_benchmark()
+    except Exception as e:
+        print("Error: Asegúrate de que la API esté encendida (uvicorn main:app --reload)")

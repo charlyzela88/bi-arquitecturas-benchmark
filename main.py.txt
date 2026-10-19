@@ -1,0 +1,33 @@
+from fastapi import FastAPI
+import time
+
+app = FastAPI()
+
+# BD en memoria simulada
+database = []
+
+# --- 1. ARQUITECTURA LAMBDA (Simulación Ingesta Batch / Lote) ---
+@app.post("/api/v1/lambda/batch")
+def ingest_lambda_batch(data: list[dict]):
+    start_time = time.time()
+    # Simula el procesamiento por lotes y guardado masivo
+    for item in data:
+        database.append(item)
+    time.sleep(0.05) # Pequeña simulación de procesamiento
+    latency = (time.time() - start_time) * 1000 # en ms
+    return {"architecture": "Lambda (Batch)", "processed_items": len(data), "latency_ms": round(latency, 2)}
+
+# --- 2. ARQUITECTURA KAPPA (Simulación Ingesta Streaming / Evento por Evento) ---
+@app.post("/api/v1/kappa/stream")
+def ingest_kappa_stream(item: dict):
+    start_time = time.time()
+    # Simula el procesamiento continuo e inmediato
+    database.append(item)
+    latency = (time.time() - start_time) * 1000 # en ms
+    return {"architecture": "Kappa (Streaming)", "status": "processed", "latency_ms": round(latency, 2)}
+
+# --- API REST vs API STREAMING / DIRECTA ---
+@app.get("/api/v1/data")
+def get_data_rest():
+    # Consulta REST básica
+    return {"total_records": len(database), "sample": database[-10:] if database else []}
